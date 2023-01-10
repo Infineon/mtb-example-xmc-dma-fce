@@ -1,14 +1,10 @@
 # XMC&trade; MCU: DMA FCE
 
-This code example demonstrates how to use DMA to feed the flexible CRC engine (FCE) to calculate the CRC-32 on a fictitious frame of data in XMC&trade; MCU.
+This code example demonstrates the use of DMA to feed the flexible CRC engine (FCE), to calculate the CRC-32 on a fictitious frame of data in XMC&trade; MCU.
 
 ## Overview
 
 The FCE provides a parallel implementation of cyclic redundancy code (CRC) algorithms. The FCE block of XMC&trade; MCU implements the IEEE 802.3 Ethernet CRC-32, CCITT CRC-16, and SAE J1850 CRC-8 polynomials. The primary target of the FCE is to be used as a hardware acceleration engine for software applications or operating system services using CRC signatures.
-
-[View this README on GitHub.](https://github.com/Infineon/mtb-example-xmc-dma-fce)
-
-[Provide feedback on this code example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzI2MjkiLCJTcGVjIE51bWJlciI6IjAwMi0zMjYyOSIsIkRvYyBUaXRsZSI6IlhNQyZ0cmFkZTsgTUNVOiBETUEgRkNFIiwicmlkIjoicm1iayIsIkRvYyB2ZXJzaW9uIjoiMi4wLjAiLCJEb2MgTGFuZ3VhZ2UiOiJFbmdsaXNoIiwiRG9jIERpdmlzaW9uIjoiTUNEIiwiRG9jIEJVIjoiSUNXIiwiRG9jIEZhbWlseSI6Ik4vQSJ9)
 
 ## Requirements
 
@@ -20,12 +16,15 @@ The FCE provides a parallel implementation of cyclic redundancy code (CRC) algor
 ## Supported toolchains (make variable 'TOOLCHAIN')
 
 - GNU Arm&reg; embedded compiler v10.3.1 (`GCC_ARM`) - Default value of `TOOLCHAIN`
-- Arm&reg; compiler v6.16 (`ARM`)
-- IAR C/C++ compiler v9.30.1 (`IAR`)
 
 ## Supported kits (make variable 'TARGET')
 
 - [XMC4700 relax kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc47_relax_v1/) (`KIT_XMC47_RELAX_V1`) - Default value of `TARGET`
+- [XMC4200 Platform2Go kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc_plt2go_xmc4200/) (`KIT_XMC_PLT2GO_XMC4200`)
+- [XMC4300 relax EtherCAT kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc43_relax_ecat_v1/) (`KIT_XMC43_RELAX_ECAT_V1`)
+- [XMC4400 Platform2Go kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc_plt2go_xmc4400/) (`KIT_XMC_PLT2GO_XMC4400`)
+- [XMC4500 relax kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc45_relax_v1/) (`KIT_XMC45_RELAX_V1`)
+- [XMC4800 relax EtherCAT kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc48_relax_ecat_v1/) (`KIT_XMC48_RELAX_ECAT_V1`)
 
 ## Hardware setup
 
@@ -59,7 +58,7 @@ Create the project and open it using one of the following:
 
 6. Click **Create** to complete the application creation process.
 
-For more details, see the [Eclipse IDE for ModusToolbox&trade; software user guide](https://www.infineon.com/MTBEclipseIDEUserGuide) (locally available at *{ModusToolbox&trade; software install directory}/ide_{version}/docs/mt_ide_user_guide.pdf*).
+For more details, see the [Eclipse IDE for ModusToolbox&trade; software user guide](https://www.infineon.com/MTBEclipseIDEUserGuide) (locally available at *{ModusToolbox&trade; software install directory}/docs_{version}/mt_ide_user_guide.pdf*).
 
 </details>
 
@@ -69,7 +68,7 @@ ModusToolbox&trade; software provides the Project Creator as both a GUI tool and
 
 Use a CLI terminal to invoke the "project-creator-cli" tool. On Windows, use the command line "modus-shell" program provided in the ModusToolbox&trade; software installation instead of a standard Windows command-line application. This shell provides access to all ModusToolbox&trade; software tools. You can access it by typing `modus-shell` in the search box in the Windows menu. In Linux and macOS, you can use any terminal application.
 
-This tool has the following arguments:
+The "project-creator-cli" tool has the following arguments:
 
 Argument | Description | Required/optional
 ---------|-------------|-----------
@@ -116,9 +115,9 @@ The following example will clone the "[DMA FCE](https://github.com/Infineon/mtb-
 
 3. After programming, the applications starts automatically.
 
-4. Observe that the user LED will turn ON indicating that the calculated CRC matches the expected one.
+4. Observe that the User LED will turn ON indicating that the calculated CRC matches the expected one.
 
-5. To illustrate a CRC mismatch error, change an element value in the *data* array arbitarily. Observe that the user LED will blink at 2 Hz indicating that there is a CRC mismatch.
+5. To illustrate a CRC mismatch error, change an element value in the *data* array arbitarily. Observe that the User LED will blink at 2 Hz indicating that there is a CRC mismatch.
 
 ## Debugging
 
@@ -126,9 +125,9 @@ You can debug the example to step through the code. In the IDE, use the **\<Appl
 
 ## Design and implementation
 
-In this example project, the FCE is configured to calculate the CRC-32 of 256 words (each word with 4 bytes). A DMA is configured to transfer this data frame from the SRAM to the FCE. DMA helps offload the data transfer from the CPU, allowing it to perform other tasks. Once the data transfer is complete, the CRC-32 calculated by the FCE is compared with the expected CRC. The user LED turns ON indicating that the calculated CRC matches the expected one. If there is a CRC mismatch error, the user LED blinks at 2 Hz.
+In this example project, the FCE is configured to calculate the CRC-32 of 256 words (each word with 4 bytes). A DMA is configured to transfer this data frame from the SRAM to the FCE. DMA helps offload the data transfer from the CPU, allowing it to perform other tasks. Once the data transfer is complete, the CRC-32 calculated by the FCE is compared with the expected CRC. The User LED turns ON indicating that the calculated CRC matches the expected one. If there is a CRC mismatch error, the User LED blinks at 2 Hz.
 
-**Figure 1. Firmware flowchart**
+**Firmware flowchart**
 
 ![](images/flowchart.jpg)
 
@@ -137,16 +136,16 @@ In this example project, the FCE is configured to calculate the CRC-32 of 256 wo
 Resources  | Links
 -----------|----------------------------------
 Code examples  | [Using ModusToolbox&trade; software](https://github.com/Infineon/Code-Examples-for-ModusToolbox-Software) on GitHub
-Device documentation | [XMC4000 family datasheets](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc4000-industrial-microcontroller-arm-cortex-m4/#document-group-myInfineon-49) <br> [XMC4000 family technical reference manuals](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc4000-industrial-microcontroller-arm-cortex-m4/#document-group-myInfineon-44)
-Development kits | [XMC&trade; eval boards](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/#boards)
+Device documentation | [XMC4000 MCU family datasheets](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc4000-industrial-microcontroller-arm-cortex-m4/#document-group-myInfineon-49) <br> [XMC4000 MCU family technical reference manuals](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc4000-industrial-microcontroller-arm-cortex-m4/#document-group-myInfineon-44)
+Development kits | [XMC&trade; MCU eval boards](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/#boards)
 Libraries on GitHub  | [mtb-xmclib-cat3](https://github.com/Infineon/mtb-xmclib-cat3) – XMC&trade; peripheral driver library (XMCLib)
-Tools  | [Eclipse IDE for ModusToolbox&trade; software](https://www.infineon.com/modustoolbox) – ModusToolbox&trade; software is a collection of easy-to-use software and tools enabling rapid development with Infineon MCUs, covering applications from embedded sense and control to wireless and cloud-connected systems using AIROC&trade; Wi-Fi and Bluetooth® connectivity devices.
+Tools  | [Eclipse IDE for ModusToolbox&trade; software](https://www.infineon.com/modustoolbox) – ModusToolbox&trade; software is a collection of easy-to-use software and tools enabling rapid development with Infineon MCUs, covering applications from embedded sense and control to wireless and cloud-connected systems using AIROC&trade; Wi-Fi and Bluetooth&reg; connectivity devices.
 
 ## Other resources
 
-Infineon provides a wealth of data at www.infineon.com to help you select the right device, and quickly and effectively integrate it into your design.
+Infineon provides a wealth of data at [www.infineon.com](www.infineon.com) to help you select the right device, and quickly and effectively integrate it into your design.
 
-For XMC&trade; MCU devices, see [32-bit XMC™ Industrial microcontroller based on Arm® Cortex®-M](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/).
+For XMC&trade; MCU devices, see [32-bit XMC&trade; Industrial microcontroller based on Arm® Cortex®-M](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/).
 
 ## Document history
 
@@ -156,7 +155,8 @@ Document title: *CE232629* - *XMC&trade; MCU: DMA FCE*
 | ------- | --------------------- |
 | 1.0.0   | New code example      |
 | 1.1.0   | Added support for new kits |
-| 2.0.0   | Updated to support ModusToolbox&trade; software v3.0, CE will not be backwards compatible with previous versions of ModusToolbox&trade; software. |
+| 2.0.0   | Updated to support ModusToolbox&trade; software v3.0. This CE is not backward compatible with previous versions of ModusToolbox&trade;software. |
+| 2.1.0   | Added support for DMA personality. |
 ------
 
 All other trademarks or registered trademarks referenced herein are the property of their respective owners.

@@ -10,7 +10,7 @@
 *
 ******************************************************************************
 *
-* Copyright (c) 2021, Infineon Technologies AG
+* Copyright (c) 2022, Infineon Technologies AG
 * All rights reserved.                        
 *                                             
 * Boost Software License - Version 1.0 - August 17th, 2003
@@ -41,8 +41,7 @@
 
 #include "cybsp.h"
 #include "cy_utils.h"
-#include "xmc_fce.h"
-#include "xmc_dma.h"
+#include "cy_retarget_io.h"
 
 /*******************************************************************************
 * Defines
@@ -52,15 +51,14 @@
 #define TICKS_PER_SECOND   1000
 #define TICKS_WAIT_MS      500
 
-/* DMA Channel 2 */
-#define GPDMA_CHANNEL_NUM  2
-
 /* Data Length of the fictitious data */
 #define DATA_SIZE          256UL
 
 /* Expected crc32 of the fictitious data */
 #define EXPECTED_CRC       0x99f69cd9
 
+/* Define macro to enable/disable printing of debug messages */
+#define ENABLE_XMC_DEBUG_PRINT (0)
 
 /*******************************************************************************
 * Variables
@@ -103,39 +101,9 @@ const uint32_t data[DATA_SIZE] =
         0x6E8392A8,  0x88576DB6,  0x4124D40E,  0xD58AD161,  0xD667DC29,  0xC3BB310B,  0xB46DED73,  0xFFFB622D
 };
 
-/* CRC engine configuration */
-const XMC_FCE_t crc_engine =
-{
-  .kernel_ptr = FCE_KE0,                /* FCE Kernel Pointer */
-  .fce_cfg_update.config_xsel = true,   /* Enables output inversion */
-  .fce_cfg_update.config_refin = true,  /* Enables byte-wise reflection */
-  .fce_cfg_update.config_refout = true, /* Enables bit-wise reflection */
-  .seedvalue = 0xffffffffU              /* CRC seed value to be used */
-};
-
-/* DMA channel configuration */
-const XMC_DMA_CH_CONFIG_t dma_ch_config =
-{
-  {
-    .enable_interrupt = true,                                          /* Interrupts enabled ? */
-    .dst_transfer_width = XMC_DMA_CH_TRANSFER_WIDTH_32,                /* Destination transfer width */
-    .src_transfer_width = XMC_DMA_CH_TRANSFER_WIDTH_32,                /* Source transfer width */
-    .dst_address_count_mode = XMC_DMA_CH_ADDRESS_COUNT_MODE_NO_CHANGE, /* Destination address count mode */
-    .src_address_count_mode = XMC_DMA_CH_ADDRESS_COUNT_MODE_INCREMENT, /* Source address count mode */
-    .dst_burst_length = XMC_DMA_CH_BURST_LENGTH_8,                     /* Destination burst length */
-    .src_burst_length = XMC_DMA_CH_BURST_LENGTH_8,                     /* Source burst length */
-    .enable_src_gather = false,                                        /* Source gather enabled? */
-    .enable_dst_scatter = false,                                       /* Destination scatter enabled? */
-    .transfer_flow = XMC_DMA_CH_TRANSFER_FLOW_M2M_DMA,                 /* Transfer flow */
-  },
-  .src_addr = (uint32_t)&data[0],                                      /* Source address */
-  .dst_addr = (uint32_t)&(FCE_KE0->IR),                                /* Destination address */
-  .block_size = DATA_SIZE,                                             /* Block size */
-  .transfer_type = XMC_DMA_CH_TRANSFER_TYPE_SINGLE_BLOCK,              /* Transfer type */
-  .priority = XMC_DMA_CH_PRIORITY_0,                                   /* Priority level */
-  .src_handshaking = XMC_DMA_CH_SRC_HANDSHAKING_SOFTWARE,              /* Source handshaking */
-  .dst_handshaking = XMC_DMA_CH_DST_HANDSHAKING_SOFTWARE               /* Destination handshaking */
-};
+/* DMA Source and Destination Address */
+uint32_t *dst_ptr = (uint32_t*)&(FCE_KE0->IR);
+uint32_t *src_ptr = (uint32_t*)&data[0];
 
 /* Variable to indicate the transfer complete status of the DMA */
 volatile bool transfer_done = false;
@@ -162,7 +130,7 @@ void SysTick_Handler(void)
     if (TICKS_WAIT_MS == ticks)
     {
         /* Toggle LED */
-        XMC_GPIO_ToggleOutput(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
+        XMC_GPIO_ToggleOutput(CYBSP_USER_LED1_PORT, CYBSP_USER_LED1_PIN);
         ticks = 0;
     }
 }
@@ -187,7 +155,7 @@ void GPDMA0_0_IRQHandler(void)
     transfer_done = true;
 
     /* Clear the DMA interrupt */
-    XMC_DMA_CH_ClearEventStatus(XMC_DMA0, GPDMA_CHANNEL_NUM, XMC_DMA_CH_EVENT_BLOCK_TRANSFER_COMPLETE);
+    XMC_DMA_CH_ClearEventStatus(DMA_HW, DMA_NUM, XMC_DMA_CH_EVENT_BLOCK_TRANSFER_COMPLETE);
 }
 
 
@@ -220,42 +188,42 @@ int main(void)
     {
         CY_ASSERT(0);
     }
+    cy_retarget_io_init(CYBSP_DEBUG_UART_HW);
 
-    /* Initialize and enable the GPDMA peripheral */
-    XMC_DMA_Init(XMC_DMA0);
-
-    /* Initialize the DMA channel 2 with provided channel configuration */
-    XMC_DMA_CH_Init(XMC_DMA0, GPDMA_CHANNEL_NUM, &dma_ch_config);
-
-    /* Enable DMA event */
-    XMC_DMA_CH_EnableEvent(XMC_DMA0, GPDMA_CHANNEL_NUM, XMC_DMA_CH_EVENT_BLOCK_TRANSFER_COMPLETE);
+    #if ENABLE_XMC_DEBUG_PRINT
+        printf("Init complete\r\n");
+    #endif
 
     /* Set the interrupt priority for DMA event and enable the DMA interrupt */
     NVIC_SetPriority(GPDMA0_0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 63, 0));
     NVIC_EnableIRQ(GPDMA0_0_IRQn);
 
-    /* Initialize the FCE engine */
-    XMC_FCE_Init(&crc_engine);
-
     /* Update the expected CRC-32 */
-    XMC_FCE_UpdateCRCCheck(&crc_engine, EXPECTED_CRC);
+    XMC_FCE_UpdateCRCCheck(&FCE_config, EXPECTED_CRC);
 
     /* Set length of message */
-    XMC_FCE_UpdateLength(&crc_engine, DATA_SIZE);
+    XMC_FCE_UpdateLength(&FCE_config, DATA_SIZE);
 
     /* Enable auto checking of the calculated CRC */
-    XMC_FCE_EnableOperation(&crc_engine, XMC_FCE_CFG_CONFIG_CCE);
+    XMC_FCE_EnableOperation(&FCE_config, XMC_FCE_CFG_CONFIG_CCE);
 
     /* Enable the DMA channel to initiate transfer */
-    XMC_DMA_CH_Enable(XMC_DMA0, GPDMA_CHANNEL_NUM);
+    XMC_DMA_CH_Enable(DMA_HW, DMA_NUM);
 
     /* Wait till DMA transfer is complete */
     while (transfer_done == false);
 
-    if (XMC_FCE_GetEventStatus(&crc_engine, XMC_FCE_STS_MISMATCH_CRC) == false)
+    #if ENABLE_XMC_DEBUG_PRINT
+    printf("DMA transfer complete\r\n");
+    #endif
+
+    if (XMC_FCE_GetEventStatus(&FCE_config, XMC_FCE_STS_MISMATCH_CRC) == false)
     {
         /* Turn ON the user LED */
         XMC_GPIO_SetOutputHigh(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
+        #if ENABLE_XMC_DEBUG_PRINT
+        printf("LED turned on\r\n");
+        #endif
     }
     else
     {
